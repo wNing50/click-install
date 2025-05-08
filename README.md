@@ -1,8 +1,7 @@
-# ext-name
+# auto-install
 
-## Configurations
-
-## Commands
+## description
+A vscode extension that automatically import dependencies for your project.
 
 ## License
 

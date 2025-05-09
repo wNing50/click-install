@@ -1,23 +1,21 @@
 import type { Ref } from 'reactive-vscode'
-import { readFileSync } from 'node:fs'
+import type { Modules } from './types'
 
+import { readFileSync } from 'node:fs'
 import { findUpSync } from 'find-up'
 import shelljs from 'shelljs'
+
 import { window } from 'vscode'
 
 shelljs.config.execPath = shelljs.which('node')?.toString() ?? ''
+export const modules: Modules[] = []
 
-interface Modules {
-  name: string
-  col: number
-}
-
-export function useModules(code: Ref<string | undefined>): Modules[] {
+export function useModules(code: Ref<string | undefined>): void {
+  modules.length = 0
   if (!code.value) {
-    return []
+    return
   }
-  const modules = getToImportModules(code.value)
-  return modules
+  modules.push(...getToImportModules(code.value))
 }
 
 function getToImportModules(code: string | undefined): Modules[] {
@@ -30,7 +28,7 @@ function getToImportModules(code: string | undefined): Modules[] {
     .filter(({ '1': name }) =>
       !pkgs.includes(name) && filterPkg(name) && filterNpmPkg(name),
     )
-    .map(({ '1': name, index }) => ({ name, col: getCol(code, index) }))
+    .map(({ '1': name, index }) => ({ name, line: getLine(code, index) }))
   return modules
 }
 
@@ -54,7 +52,7 @@ function getImportMatcher(code: string | undefined) {
 }
 
 function filterPkg(pkgName: string) {
-  const filters = [/^node:/]
+  const filters = [/^node:/, /^vscode$/]
   return filters.every(r => !r.test(pkgName))
 }
 
@@ -70,6 +68,6 @@ function filterNpmPkg(pkgName: string): boolean {
   }
 }
 
-function getCol(code: string, index: number): number {
+function getLine(code: string, index: number): number {
   return [...code.slice(0, index).matchAll(/\n/g)].length
 }

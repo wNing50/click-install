@@ -1,4 +1,4 @@
-# auto-install
+# click-install
 
 ## description
 A vscode extension that automatically import dependencies for your project.

@@ -1,20 +1,20 @@
 {
   "publisher": "wNing50",
-  "name": "auto-install",
-  "displayName": "auto-install",
+  "name": "click-install",
+  "displayName": "click-install",
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.4.1",
   "description": "A vscode extension that automatically import dependencies for your project.",
   "author": "Nick Wu",
   "license": "MIT",
-  "homepage": "https://github.com/wNing50/auto-install#README.md",
+  "homepage": "https://github.com/wNing50/click-install#README.md",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wNing50/auto-install"
+    "url": "https://github.com/wNing50/click-install"
   },
   "bugs": {
-    "url": "https://github.com/wNing50/auto-install/issues"
+    "url": "https://github.com/wNing50/click-install/issues"
   },
   "categories": [
     "Other"

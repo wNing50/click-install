@@ -1,9 +1,10 @@
-<p>
-<img height="300" src="./icon.png">
+<p align='center'>
+    <img height="150" src="./icon.png">
 </p>
 
 A vscode extention to install dependencies just one click.
-No need to `pnpm add balablal`
+
+No need to `pnpm add xx` for each times.
 
 ## License
 

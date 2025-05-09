@@ -1,10 +1,15 @@
-import { defineExtension, useActiveColorTheme, useIsDarkTheme, watchEffect } from 'reactive-vscode'
-import { window } from 'vscode'
+import { warn } from 'node:console'
+import { defineExtension, useActiveTextEditor, useDocumentText, watchEffect } from 'reactive-vscode'
+import { useModules } from './utils/modules'
 
 export const { activate, deactivate } = defineExtension(() => {
-  const theme = useActiveColorTheme()
-  const isDark = useIsDarkTheme()
+  console.warn('start')
+
+  const editor = useActiveTextEditor()
+  const code = useDocumentText(() => editor.value?.document)
+
   watchEffect(() => {
-    window.showInformationMessage(`Your theme is ${theme.value} (kind: ${isDark.value ? 'dark' : 'light'})`)
+    const modules = useModules(code)
+    warn(modules)
   })
 })

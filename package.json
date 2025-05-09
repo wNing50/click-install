@@ -34,22 +34,25 @@
   ],
   "scripts": {
     "build": "tsdown src/index.ts --external vscode",
-    "dev": "nr build --watch --sourcemap",
+    "dev": "pnpm build --watch --sourcemap",
     "pack": "vsce package --no-dependencies",
     "lint": "eslint .",
     "publish": "vsce publish --no-dependencies",
     "typecheck": "tsc --noEmit",
-    "release": "bumpp && nr publish"
+    "release": "bumpp && pnpm publish"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.2.1",
     "@types/node": "^22.13.4",
+    "@types/shelljs": "^0.8.15",
     "@types/vscode": "^1.97.0",
     "@vscode/vsce": "^3.2.2",
     "bumpp": "^10.0.3",
     "eslint": "^9.20.1",
+    "find-up": "^7.0.0",
     "pnpm": "^10.10.0",
     "reactive-vscode": "^0.2.10",
+    "shelljs": "^0.9.2",
     "tsdown": "^0.9.6",
     "typescript": "^5.7.3"
   }

@@ -1,7 +1,9 @@
-# click-install
+<p>
+<img height="300" src="./icon.png">
+</p>
 
-## description
-A vscode extension that automatically import dependencies for your project.
+A vscode extention to install dependencies just one click.
+No need to `pnpm add balablal`
 
 ## License
 

@@ -10,26 +10,26 @@ import { window } from 'vscode'
 shelljs.config.execPath = shelljs.which('node')?.toString() ?? ''
 export const modules: Modules[] = []
 
-export function useModules(code: Ref<string | undefined>): void {
+export async function useModules(code: Ref<string | undefined>): Promise<void> {
   modules.length = 0
   if (!code.value) {
     return
   }
-  modules.push(...getToImportModules(code.value))
+  modules.push(...await (getToImportModules(code.value)))
 }
 
-function getToImportModules(code: string | undefined): Modules[] {
+async function getToImportModules(code: string | undefined) {
   if (!code) {
     return []
   }
   const pkgs = getPkgDeps()
-  const modules
-  = [...getImportMatcher(code)]
-    .filter(({ '1': name }) =>
-      !pkgs.includes(name) && filterPkg(name) && filterNpmPkg(name),
-    )
+  const importModules = [...getImportMatcher(code)]
     .map(({ '1': name, index }) => ({ name, line: getLine(code, index) }))
-  return modules
+  const syncFiltered = importModules.filter(({ name }) =>
+    !pkgs.includes(name) && filterPkg(name),
+  )
+  const asyncFiltered = await asyncFilter(syncFiltered)
+  return asyncFiltered
 }
 
 function getPkgDeps(): string[] {
@@ -47,25 +47,39 @@ function getImportMatcher(code: string | undefined) {
   if (!code) {
     return []
   }
-  const importReg = /^\s*import.*from ['"]([\w\-/@]+)['"]$/gm
+  const importReg = /^\s*import[^'"]*from ['"]([\w\-/@]+)['"]$/gm
   return code.matchAll(importReg)
 }
 
+async function asyncFilter(pkgs: Modules[]): Promise<Modules[]> {
+  const filtered = await Promise.all(pkgs.map(({ name }) => filterNpmPkg(name)))
+  return pkgs.filter((_,index) => filtered[index])
+}
+
 function filterPkg(pkgName: string) {
-  const filters = [/^node:/, /^vscode$/]
+  const filters = [/^node:/, /^vscode$/, /^@\//]
   return filters.every(r => !r.test(pkgName))
 }
 
-const npmMap = new Map()
-function filterNpmPkg(pkgName: string): boolean {
+const npmMap = new Map<string, boolean>()
+async function filterNpmPkg(pkgName: string): Promise<boolean> {
   if (npmMap.has(pkgName)) {
-    return npmMap.get(pkgName)
+    return npmMap.get(pkgName) as boolean
   }
   else {
-    const { code } = shelljs.exec(`npm view ${pkgName}`, { silent: true })
-    npmMap.set(pkgName, code !== 0)
-    return code !== 0
+    const res = await shellProcess(pkgName)
+    npmMap.set(pkgName, res)
+    return res
   }
+}
+
+function shellProcess(pkgName: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    shelljs.exec(`npm view ${pkgName}`, { silent: true }, (code) => {
+      console.warn('Exit code:', code, pkgName)
+      resolve(code === 0)
+    })
+  })
 }
 
 function getLine(code: string, index: number): number {

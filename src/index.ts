@@ -9,7 +9,7 @@ export const { activate, deactivate } = defineExtension(() => {
   const code = useDocumentText(() => editor.value?.document)
   createProvider()
 
-  watchEffect(() => {
-    useModules(code)
+  watchEffect(async () => {
+    await useModules(code)
   })
 })

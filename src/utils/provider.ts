@@ -1,4 +1,5 @@
 import { CodeLens, languages, Position, Range, window } from 'vscode'
+import { COMMAND } from './constant'
 import { modules } from './modules'
 
 export function createProvider() {
@@ -9,12 +10,12 @@ export function createProvider() {
       }
       return modules.map((m) => {
         const { name, line } = m
-        const range = new Range(new Position(line, 10), new Position(line, 10))
+        const range = new Range(new Position(line, 0), new Position(line, 0))
         return new CodeLens(range, {
-          command: 'click-install.install',
+          command: COMMAND,
           title: name,
           tooltip: name,
-          arguments: [range, name],
+          arguments: [name],
         })
       })
     },

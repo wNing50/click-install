@@ -15,21 +15,14 @@ export async function useModules(code: Ref<string | undefined>): Promise<void> {
   if (!code.value) {
     return
   }
-  modules.push(...await (getToImportModules(code.value)))
-}
-
-async function getToImportModules(code: string | undefined) {
-  if (!code) {
-    return []
-  }
   const pkgs = getPkgDeps()
-  const importModules = [...getImportMatcher(code)]
-    .map(({ '1': name, index }) => ({ name, line: getLine(code, index) }))
+  const importModules = [...getImportMatcher(code.value)]
+    .map(({ '1': name, index }) => ({ name, line: getLine(code.value as string, index) }))
   const syncFiltered = importModules.filter(({ name }) =>
     !pkgs.includes(name) && filterPkg(name),
   )
   const asyncFiltered = await asyncFilter(syncFiltered)
-  return asyncFiltered
+  modules.push(...asyncFiltered)
 }
 
 function getPkgDeps(): string[] {
@@ -53,7 +46,7 @@ function getImportMatcher(code: string | undefined) {
 
 async function asyncFilter(pkgs: Modules[]): Promise<Modules[]> {
   const filtered = await Promise.all(pkgs.map(({ name }) => filterNpmPkg(name)))
-  return pkgs.filter((_,index) => filtered[index])
+  return pkgs.filter((_, index) => filtered[index])
 }
 
 function filterPkg(pkgName: string) {

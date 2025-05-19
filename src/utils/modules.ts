@@ -3,11 +3,10 @@ import type { Modules } from './types'
 
 import { readFileSync } from 'node:fs'
 import { findUpSync } from 'find-up'
-import shelljs from 'shelljs'
-
 import { window } from 'vscode'
 
-shelljs.config.execPath = shelljs.which('node')?.toString() ?? ''
+import { disposablesTerminal } from './terminal'
+
 export const modules: Modules[] = []
 
 export async function useModules(code: Ref<string | undefined>): Promise<void> {
@@ -60,19 +59,10 @@ async function filterNpmPkg(pkgName: string): Promise<boolean> {
     return npmMap.get(pkgName) as boolean
   }
   else {
-    const res = await shellProcess(pkgName)
+    const res = await disposablesTerminal(`npm view ${pkgName}`)
     npmMap.set(pkgName, res)
     return res
   }
-}
-
-function shellProcess(pkgName: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    shelljs.exec(`npm view ${pkgName}`, { silent: true }, (code) => {
-      console.warn('Exit code:', code, pkgName)
-      resolve(code === 0)
-    })
-  })
 }
 
 function getLine(code: string, index: number): number {

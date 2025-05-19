@@ -3,35 +3,47 @@ import { window } from 'vscode'
 import { COMMAND } from './constant'
 
 const terminalMap = new Map()
-const prefix = 'click install~'
+const processIdSet = new Set()
 let pkgManager = ''
+
+export function disposablesTerminal(command: string): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const { terminal, sendText } = useControlledTerminal({ hideFromUser: true })
+    sendText(command)
+    window.onDidEndTerminalShellExecution((t) => {
+      const { exitCode, terminal: doneTerminal } = t
+      if (doneTerminal.processId === terminal.value?.processId && exitCode !== undefined) {
+        terminal.value.dispose()
+        resolve(exitCode === 0)
+      }
+    })
+  })
+}
 
 export function registerCommand() {
   useCommand(COMMAND, (pkgName) => {
-    const terminalName = `${prefix}${pkgName}`
-    if (terminalMap.has(terminalName)) {
+    if (terminalMap.has(pkgName)) {
       return
     }
-    const { sendText, terminal } = useControlledTerminal({ name: terminalName })
-    sendText(`${pkgManager} view ${pkgName}`)
+    const { sendText, terminal } = useControlledTerminal({ name: pkgName, hideFromUser: true })
+    sendText(`${pkgManager} view ${pkgName}`) // todo: install
     terminalMap.set(pkgName, terminal)
+    processIdSet.add(terminal.value?.processId)
   })
 
   window.onDidEndTerminalShellExecution((t) => {
     const { terminal } = t
-    const { name } = terminal
-    if (name.startsWith(prefix)) {
-      const pkgName = name.split(prefix).at(-1)
-      if (terminalMap.has(pkgName)) {
-        terminal.dispose()
-        terminalMap.delete(pkgName)
-      }
+    const { name: pkgName, processId } = terminal
+    if (terminalMap.has(pkgName) && processIdSet.has(processId)) {
+      terminal.dispose()
+      terminalMap.delete(pkgName)
+      processIdSet.delete(processId)
     }
   })
 }
 
 export function getPkgManager() {
-  const { sendText } = useControlledTerminal({ name: 'pkgManager' })
+  const { sendText } = useControlledTerminal({ name: 'pkgManager', hideFromUser: true })
   const pkgManagers = pkgManagersGenerator()
   let pkg = pkgManagers.next()
   sendText(`${pkg.value} -v`)

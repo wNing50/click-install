@@ -3,9 +3,9 @@ import { useModules } from './utils/modules'
 import { createProvider } from './utils/provider'
 import { getPkgManager, registerCommand } from './utils/terminal'
 
-export const { activate, deactivate } = defineExtension(() => {
+export const { activate, deactivate } = defineExtension(async () => {
   console.warn('start')
-  getPkgManager()
+  await getPkgManager()
   const editor = useActiveTextEditor()
   const code = useDocumentText(() => editor.value?.document)
   createProvider()

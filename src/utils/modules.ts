@@ -59,7 +59,7 @@ async function filterNpmPkg(pkgName: string): Promise<boolean> {
     return npmMap.get(pkgName) as boolean
   }
   else {
-    const res = await disposablesTerminal(`npm view ${pkgName}`)
+    const res = await disposablesTerminal({ command: pkgManager => `${pkgManager} view ${pkgName}` })
     npmMap.set(pkgName, res)
     return res
   }

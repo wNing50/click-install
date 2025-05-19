@@ -1,16 +1,20 @@
 import type { Ref } from 'reactive-vscode'
-import type { Modules } from './types'
-
 import { readFileSync } from 'node:fs'
 import { findUpSync } from 'find-up'
+import { ref } from 'reactive-vscode'
+
 import { window } from 'vscode'
 
 import { disposablesTerminal } from './terminal'
 
-export const modules: Modules[] = []
+export interface Module {
+  name: string
+  line: number
+}
+
+export const modules: Ref<Module[]> = ref([])
 
 export async function useModules(code: Ref<string | undefined>): Promise<void> {
-  modules.length = 0
   if (!code.value) {
     return
   }
@@ -21,7 +25,7 @@ export async function useModules(code: Ref<string | undefined>): Promise<void> {
     !pkgs.includes(name) && filterPkg(name),
   )
   const asyncFiltered = await asyncFilter(syncFiltered)
-  modules.push(...asyncFiltered)
+  modules.value = [...asyncFiltered]
 }
 
 function getPkgDeps(): string[] {
@@ -43,7 +47,7 @@ function getImportMatcher(code: string | undefined) {
   return code.matchAll(importReg)
 }
 
-async function asyncFilter(pkgs: Modules[]): Promise<Modules[]> {
+async function asyncFilter(pkgs: Module[]): Promise<Module[]> {
   const filtered = await Promise.all(pkgs.map(({ name }) => filterNpmPkg(name)))
   return pkgs.filter((_, index) => filtered[index])
 }

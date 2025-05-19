@@ -8,7 +8,7 @@ export function createProvider() {
       if (document.fileName !== window.activeTextEditor?.document.fileName) {
         return []
       }
-      return modules.map((m) => {
+      return modules.value.map((m) => {
         const { name, line } = m
         const range = new Range(new Position(line, 0), new Position(line, 0))
         return new CodeLens(range, {

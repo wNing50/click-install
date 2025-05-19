@@ -1,13 +1,10 @@
 import type { TerminalShellExecutionEndEvent } from 'vscode'
+import type { PkgManagers } from './constant'
 import { useCommand, useControlledTerminal } from 'reactive-vscode'
 import { window } from 'vscode'
-import { COMMAND } from './constant'
+import { COMMAND, pkgCommands, pkgManagers } from './constant'
 
-const terminalMap = new Map()
-const processIdSet = new Set()
-const pkgManagers = ['npm', 'pnpm', 'yarn'] as const
-type PkgManagers = (typeof pkgManagers)[number] | ''
-let pkgManager: PkgManagers = ''
+let pkgManager: PkgManagers = 'npm'
 
 function* pkgManagersGenerator() {
   yield* pkgManagers
@@ -17,7 +14,7 @@ interface DisposablesTerminalOptions {
   command: string | ((pkgManager: PkgManagers) => string)
   afterExecuted?: ((
     controlledTerminalt: ReturnType<typeof useControlledTerminal>,
-    event: TerminalShellExecutionEndEvent
+    onDidEvent: TerminalShellExecutionEndEvent
   ) => void)
 }
 
@@ -42,13 +39,16 @@ export function disposablesTerminal({ command, afterExecuted }: DisposablesTermi
   })
 }
 
+const terminalMap = new Map()
+const processIdSet = new Set()
 export function registerCommand() {
   useCommand(COMMAND, (pkgName) => {
     if (terminalMap.has(pkgName)) {
       return
     }
     const { sendText, terminal } = useControlledTerminal({ name: pkgName, hideFromUser: true })
-    sendText(`${pkgManager} view ${pkgName}`) // todo: install
+    // todo: -d -w
+    sendText(`${pkgManager} ${pkgCommands[pkgManager].install} ${pkgName}`)
     terminalMap.set(pkgName, terminal)
     processIdSet.add(terminal.value?.processId)
   })

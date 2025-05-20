@@ -14,7 +14,7 @@ export function getPkgDeps() {
   return Object.keys({ ...pkgFile.dependencies, ...pkgFile.devDependencies })
 }
 
-export function filterPkg(pkgName: string) {
+export function filterDeps(pkgName: string) {
   const filters = [/^node:/, /^vscode$/, /^@\//]
   return filters.every(r => !r.test(pkgName))
 }

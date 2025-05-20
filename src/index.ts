@@ -8,7 +8,6 @@ export const { activate, deactivate } = defineExtension(async () => {
   const editor = useActiveTextEditor()
   const code = useDocumentText(() => editor.value?.document)
   registerCommand()
-
   watchEffect(() => {
     useModules(code)
   })

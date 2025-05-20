@@ -28,11 +28,12 @@ export function disposablesTerminal({ command, afterExecuted }: DisposablesTermi
     else {
       sendText(command)
     }
-    window.onDidEndTerminalShellExecution((onDidEvent) => {
+    const d = window.onDidEndTerminalShellExecution((onDidEvent) => {
       const { exitCode, terminal: doneTerminal } = onDidEvent
       if (doneTerminal.processId === terminal.value?.processId && exitCode !== undefined) {
         afterExecuted && afterExecuted(controlledTerminal, onDidEvent)
         terminal.value.dispose()
+        d.dispose()
         resolve(exitCode === 0)
       }
     })
@@ -42,24 +43,29 @@ export function disposablesTerminal({ command, afterExecuted }: DisposablesTermi
 const terminalMap = new Map()
 const processIdSet = new Set()
 export function registerCommand() {
-  useCommand(COMMAND, (pkgName) => {
-    if (terminalMap.has(pkgName)) {
-      return
-    }
-    const { sendText, terminal } = useControlledTerminal({ name: pkgName, hideFromUser: true })
-    // todo: -d -w
-    sendText(`${pkgManager} ${pkgCommands[pkgManager].install} ${pkgName}`)
-    terminalMap.set(pkgName, terminal)
-    processIdSet.add(terminal.value?.processId)
-  })
+  const installCommand = (command: string, suffix: string = '') => {
+    useCommand(command, (pkgName) => {
+      if (terminalMap.has(pkgName)) {
+        return
+      }
+      const { sendText, terminal } = useControlledTerminal({ name: pkgName, hideFromUser: true })
+      sendText(`${pkgManager} ${pkgCommands[pkgManager].install} ${pkgName} ${suffix}`)
+      terminalMap.set(pkgName, terminal)
+      processIdSet.add(terminal.value?.processId)
+    })
+  }
 
-  window.onDidEndTerminalShellExecution((t) => {
+  installCommand(COMMAND)
+  installCommand(`${COMMAND}.dev`, '-D')
+
+  const d = window.onDidEndTerminalShellExecution((t) => {
     const { terminal } = t
     const { name: pkgName, processId } = terminal
     if (terminalMap.has(pkgName) && processIdSet.has(processId)) {
       terminal.dispose()
       terminalMap.delete(pkgName)
       processIdSet.delete(processId)
+      d.dispose()
     }
   })
 }

@@ -11,13 +11,21 @@ export function createProvider() {
       return modules.value.map((m) => {
         const { name, line } = m
         const range = new Range(new Position(line, 0), new Position(line, 0))
-        return new CodeLens(range, {
-          command: COMMAND,
-          title: name,
-          tooltip: name,
-          arguments: [name],
-        })
-      })
+        return [
+          new CodeLens(range, {
+            command: COMMAND,
+            title: name,
+            tooltip: name,
+            arguments: [name],
+          }),
+          new CodeLens(range, {
+            command: `${COMMAND}.dev`,
+            title: `${name} -D`,
+            tooltip: `${name} -D`,
+            arguments: [name],
+          }),
+        ]
+      }).flat()
     },
   })
 }

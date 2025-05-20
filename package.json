@@ -2,7 +2,7 @@
   "publisher": "wNing50",
   "name": "click-install",
   "displayName": "click-install",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "A vscode extension that automatically import dependencies for your project.",
   "author": "Nick Wu",

@@ -3,6 +3,7 @@ import type { PkgManagers } from './constant'
 import { useCommand, useControlledTerminal } from 'reactive-vscode'
 import { window } from 'vscode'
 import { COMMAND, pkgCommands, pkgManagers } from './constant'
+import { getPkgDeps } from './modules'
 
 let pkgManager: PkgManagers = 'npm'
 
@@ -20,7 +21,7 @@ interface DisposablesTerminalOptions {
 
 export function disposablesTerminal({ command, afterExecuted }: DisposablesTerminalOptions): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
-    const controlledTerminal = useControlledTerminal({ hideFromUser: true })
+    const controlledTerminal = useControlledTerminal({ hideFromUser: false })
     const { terminal, sendText } = controlledTerminal
     if (typeof command === 'function') {
       sendText(command(pkgManager))
@@ -48,7 +49,7 @@ export function registerCommand() {
       if (terminalMap.has(pkgName)) {
         return
       }
-      const { sendText, terminal } = useControlledTerminal({ name: pkgName, hideFromUser: true })
+      const { sendText, terminal } = useControlledTerminal({ name: pkgName })
       sendText(`${pkgManager} ${pkgCommands[pkgManager].install} ${pkgName} ${suffix}`)
       terminalMap.set(pkgName, terminal)
       processIdSet.add(terminal.value?.processId)
@@ -66,6 +67,7 @@ export function registerCommand() {
       terminalMap.delete(pkgName)
       processIdSet.delete(processId)
       d.dispose()
+      getPkgDeps()
     }
   })
 }

@@ -1,34 +1,9 @@
-import type { Ref } from 'reactive-vscode'
 import { readFileSync } from 'node:fs'
 import { findUpSync } from 'find-up'
-import { ref } from 'reactive-vscode'
 
 import { window } from 'vscode'
 
-import { disposablesTerminal } from './terminal'
-
-export interface Module {
-  name: string
-  line: number
-}
-
-export const modules: Ref<Module[]> = ref([])
-
-export async function useModules(code: Ref<string | undefined>): Promise<void> {
-  if (!code.value) {
-    return
-  }
-  const pkgs = getPkgDeps()
-  const importModules = [...getImportMatcher(code.value)]
-    .map(({ '1': name, index }) => ({ name, line: getLine(code.value as string, index) }))
-  const syncFiltered = importModules.filter(({ name }) =>
-    !pkgs.includes(name) && filterPkg(name),
-  )
-  const asyncFiltered = await asyncFilter(syncFiltered)
-  modules.value = [...asyncFiltered]
-}
-
-function getPkgDeps(): string[] {
+export function getPkgDeps() {
   const pkg = findUpSync('package.json', {
     cwd: window.activeTextEditor?.document.fileName,
   })
@@ -39,36 +14,7 @@ function getPkgDeps(): string[] {
   return Object.keys({ ...pkgFile.dependencies, ...pkgFile.devDependencies })
 }
 
-function getImportMatcher(code: string | undefined) {
-  if (!code) {
-    return []
-  }
-  const importReg = /^\s*import[^'"]*from ['"]([\w\-/@]+)['"]$/gm
-  return code.matchAll(importReg)
-}
-
-async function asyncFilter(pkgs: Module[]): Promise<Module[]> {
-  const filtered = await Promise.all(pkgs.map(({ name }) => filterNpmPkg(name)))
-  return pkgs.filter((_, index) => filtered[index])
-}
-
-function filterPkg(pkgName: string) {
+export function filterPkg(pkgName: string) {
   const filters = [/^node:/, /^vscode$/, /^@\//]
   return filters.every(r => !r.test(pkgName))
-}
-
-const npmMap = new Map<string, boolean>()
-async function filterNpmPkg(pkgName: string): Promise<boolean> {
-  if (npmMap.has(pkgName)) {
-    return npmMap.get(pkgName) as boolean
-  }
-  else {
-    const res = await disposablesTerminal({ command: pkgManager => `${pkgManager} view ${pkgName}` })
-    npmMap.set(pkgName, res)
-    return res
-  }
-}
-
-function getLine(code: string, index: number): number {
-  return [...code.slice(0, index).matchAll(/\n/g)].length
 }

@@ -1,31 +1,24 @@
-import { CodeLens, languages, Position, Range, window } from 'vscode'
+import { Hover, languages, MarkdownString } from 'vscode'
 import { COMMAND } from './constant'
-import { modules } from './modules'
+import { filterPkg, getPkgDeps } from './modules'
 
 export function createProvider() {
-  return languages.registerCodeLensProvider(['vue', 'typescript'], {
-    provideCodeLenses(document) {
-      if (document.fileName !== window.activeTextEditor?.document.fileName) {
-        return []
+  // 只在符合 import 语句的地方显示 Hover
+  languages.registerHoverProvider(['vue', 'typescript'], {
+    provideHover(document, position) {
+      const lineText = document.lineAt(position.line).text
+      const importRegex = /^\s*import[\s\S]+from\s+['"]([\w\-/@]+)['"]\s*(?:;\s*)?$/
+      const lineMatch = lineText.match(importRegex)
+      if (lineMatch) {
+        const pkgName = lineMatch?.[1]
+        const pkgs = getPkgDeps()
+        if (filterPkg(pkgName) && !pkgs.includes(pkgName)) {
+          const args = encodeURIComponent(JSON.stringify([pkgName]))
+          const str = new MarkdownString(`[install](command:${COMMAND}?${args}) or [install-D](command:${COMMAND}.dev?${args}): \`${pkgName}\``)
+          str.isTrusted = true
+          return new Hover(str)
+        }
       }
-      return modules.value.map((m) => {
-        const { name, line } = m
-        const range = new Range(new Position(line, 0), new Position(line, 0))
-        return [
-          new CodeLens(range, {
-            command: COMMAND,
-            title: name,
-            tooltip: name,
-            arguments: [name],
-          }),
-          new CodeLens(range, {
-            command: `${COMMAND}.dev`,
-            title: `${name} -D`,
-            tooltip: `${name} -D`,
-            arguments: [name],
-          }),
-        ]
-      }).flat()
     },
   })
 }

@@ -6,7 +6,7 @@
 
 A vscode extention to install dependencies just one click.
 
-No need to `pnpm add xx` for each times.
+No need to `pnpm/npm/yarn add xx` for each times.
 
 ## License
 

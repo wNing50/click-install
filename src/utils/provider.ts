@@ -14,7 +14,8 @@ export function createProvider() {
         if (filterDeps(pkgName) && !pkgs.includes(pkgName)) {
           const args = encodeURIComponent(JSON.stringify([pkgName]))
           // todo: show module info
-          const str = new MarkdownString(`[install](command:${COMMAND}?${args}) or [install -D](command:${COMMAND}.dev?${args}): \`${pkgName}\``)
+          const str = new MarkdownString(`\`${pkgName}\`
+            [install](command:${COMMAND}?${args}) or [install -D](command:${COMMAND}.dev?${args})`)
           str.isTrusted = true
           // todo: hover on module name
           return new Hover(str)

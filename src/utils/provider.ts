@@ -14,13 +14,24 @@ export function createProvider() {
         if (filterDeps(pkgName) && !pkgs.includes(pkgName)) {
           const args = encodeURIComponent(JSON.stringify([pkgName]))
           // todo: show module info
-          const str = new MarkdownString(`\`${pkgName}\`
-            [install](command:${COMMAND}?${args}) or [install -D](command:${COMMAND}.dev?${args})`)
-          str.isTrusted = true
-          // todo: hover on module name
-          return new Hover(str)
+          const str = hoverText(pkgName, args)
+          if (position.character >= lineText.indexOf(pkgName)) {
+            return new Hover(str)
+          }
         }
       }
     },
   })
+}
+
+function hoverText(pkgName: string, args: string) {
+  const markdownString = new MarkdownString()
+  markdownString.isTrusted = true
+  markdownString.supportHtml = true
+  markdownString.supportThemeIcons = true
+  markdownString.appendMarkdown(`<span style="color:#9cdcfe;">${pkgName}</span>`)
+  markdownString.appendText('\n')
+  markdownString.appendMarkdown(`<span>[install](command:${COMMAND}?${args}) or [install -D](command:${COMMAND}.dev?${args}).</span>`)
+  markdownString.appendMarkdown(`<span style="color:#787878;">${'&nbsp;'.repeat(4)}click-install.</span>`)
+  return markdownString
 }

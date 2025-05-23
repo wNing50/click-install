@@ -41,7 +41,6 @@ export function disposablesTerminal({ command, afterExecuted }: DisposablesTermi
 }
 
 const terminalMap = new Map()
-const processIdSet = new Set()
 export function registerCommand() {
   const installCommand = (command: string, suffix: string = '') => {
     useCommand(command, (pkgName) => {
@@ -51,7 +50,6 @@ export function registerCommand() {
       const { sendText, terminal } = useControlledTerminal({ hideFromUser: true })
       sendText(`${pkgManager} ${pkgCommands[pkgManager].install} ${pkgName} ${suffix}`)
       terminalMap.set(pkgName, terminal)
-      processIdSet.add(terminal.value?.processId)
     })
   }
 
@@ -60,11 +58,10 @@ export function registerCommand() {
 
   const d = window.onDidEndTerminalShellExecution((t) => {
     const { terminal } = t
-    const { name: pkgName, processId } = terminal
-    if (terminalMap.has(pkgName) && processIdSet.has(processId)) {
+    const { name: pkgName } = terminal
+    if (terminalMap.has(pkgName)) {
       terminal.dispose()
       terminalMap.delete(pkgName)
-      processIdSet.delete(processId)
       d.dispose()
     }
   })

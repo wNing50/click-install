@@ -16,10 +16,11 @@ interface DisposablesTerminalOptions {
     controlledTerminalt: ReturnType<typeof useControlledTerminal>,
     onDidEvent: TerminalShellExecutionEndEvent
   ) => void)
+  dispose?: boolean
 }
 
-export function disposablesTerminal({ command, afterExecuted }: DisposablesTerminalOptions): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
+export function disposablesTerminal({ command, afterExecuted, dispose = false }: DisposablesTerminalOptions): Promise<TerminalShellExecutionEndEvent> {
+  return new Promise<TerminalShellExecutionEndEvent>((resolve) => {
     const controlledTerminal = useControlledTerminal({ hideFromUser: true })
     const { terminal, sendText } = controlledTerminal
     if (typeof command === 'function') {
@@ -32,9 +33,11 @@ export function disposablesTerminal({ command, afterExecuted }: DisposablesTermi
       const { exitCode, terminal: doneTerminal } = onDidEvent
       if (doneTerminal.processId === terminal.value?.processId && exitCode !== undefined) {
         afterExecuted && afterExecuted(controlledTerminal, onDidEvent)
-        terminal.value.dispose()
-        d.dispose()
-        resolve(exitCode === 0)
+        if (dispose) {
+          terminal.value.dispose()
+          d.dispose()
+        }
+        resolve(onDidEvent)
       }
     })
   })
@@ -53,6 +56,8 @@ export function registerCommand() {
     })
   }
 
+  // todo: suit monorepo
+  // todo: with @types
   installCommand(COMMAND)
   installCommand(`${COMMAND}.dev`, '-D')
 
@@ -68,6 +73,7 @@ export function registerCommand() {
 }
 
 export function getPkgManager() {
+  // todo: use custorm config
   const pkgManagers = pkgManagersGenerator()
   let pkg = pkgManagers.next()
   return disposablesTerminal({
@@ -85,5 +91,6 @@ export function getPkgManager() {
       pkg = pkgManagers.next()
       sendText(`${pkg.value} -v`)
     },
+    dispose: true,
   })
 }

@@ -25,7 +25,6 @@ class ViewTerminal {
     const parsedMsg = msg.replaceAll(/\x1B\[[0-9;]*[A-Z]/gi, '')
     const regMatch = parsedMsg.match(new RegExp(`${this.viewPkgName.value}@\\d+.\\d+.\\d+`))
     if (regMatch) {
-      // todo: LSP cache
       const useMsg = parsedMsg.slice(parsedMsg.indexOf(regMatch[0])).split('\n').slice(0, 3)
       return useMsg
     }
@@ -47,9 +46,9 @@ class ViewTerminal {
           const pkgInfo = this.parsePkgInfo(data)
           if (pkgInfo.length) {
             this.pkgInfoMap.set(this.viewPkgName.value, pkgInfo)
-            // console.warn(pkgInfo)
             break
           }
+          this.pkgInfoMap.set(this.viewPkgName.value, ['Not found this package'])
         }
         this.viewPkgName.value = ''
       }
@@ -70,9 +69,12 @@ export async function createProvider() {
         const pkgs = getPkgDeps()
         if (filterDeps(pkgName) && !pkgs.includes(pkgName)) {
           const args = encodeURIComponent(JSON.stringify([pkgName]))
-          // todo: show module info
+          // todo: show module info reactive
           const str = hoverText(pkgName, args)
           if (position.character >= lineText.indexOf(pkgName)) {
+            if (viewTerminal.pkgInfoMap.has(pkgName)) {
+              return new Hover(str)
+            }
             if (viewTerminal.isRunning.value) {
               return new Hover(str)
             }

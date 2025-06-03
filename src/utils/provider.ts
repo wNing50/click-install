@@ -6,11 +6,15 @@ import { filterDeps, getPkgDeps } from './modules'
 const pkgInfoMap = new Map<string, string | string[] | ViewTerminal>()
 class ViewTerminal {
   controlledTerminal: ReturnType<typeof useControlledTerminal> = useControlledTerminal({ hideFromUser: true })
-  viewPkgName: string = ''
-  stream: any
+  viewPkgName!: string
+  viewPromise!: Promise<Hover>
+  viewResolve!: (value: Hover) => void
 
   view() {
     this.controlledTerminal.sendText(`npm view ${this.viewPkgName}`)
+    this.viewPromise = new Promise((resolve) => {
+      this.viewResolve = resolve
+    })
   }
 
   get processId() {
@@ -30,18 +34,19 @@ class ViewTerminal {
 
   constructor(pkgName: string) {
     this.viewPkgName = pkgName
+    let stream: AsyncIterable<string>
 
     const startEvent = window.onDidStartTerminalShellExecution((onStartEvent) => {
       const { terminal: startTerminal } = onStartEvent
       if (startTerminal.processId === this.processId) {
-        this.stream = onStartEvent.execution.read()
+        stream = onStartEvent.execution.read()
       }
     })
 
     const doneEvent = window.onDidEndTerminalShellExecution(async (onDidEvent) => {
       const { exitCode, terminal: doneTerminal } = onDidEvent
       if (doneTerminal.processId === this.processId && exitCode !== undefined) {
-        for await (const data of this.stream) {
+        for await (const data of stream) {
           const pkgInfo = this.parsePkgInfo(data)
           if (pkgInfo.length) {
             pkgInfoMap.set(this.viewPkgName, pkgInfo)
@@ -49,6 +54,7 @@ class ViewTerminal {
           }
           pkgInfoMap.set(this.viewPkgName, 'Not found this package')
         }
+        this.viewResolve(hoverText(this.viewPkgName))
         startEvent.dispose()
         doneEvent.dispose()
         doneTerminal.dispose()
@@ -67,15 +73,17 @@ export async function createProvider() {
         const pkgName = lineMatch[1]
         const pkgs = getPkgDeps()
         if (filterDeps(pkgName) && !pkgs.includes(pkgName)) {
-          // todo: show module info reactive
           if (position.character >= lineText.indexOf(pkgName)) {
             if (!pkgInfoMap.has(pkgName)) {
               const viewTerminal = new ViewTerminal(pkgName)
               pkgInfoMap.set(pkgName, viewTerminal)
               viewTerminal.view()
             }
-            const str = hoverText(pkgName)
-            return new Hover(str)
+            const viewContent = pkgInfoMap.get(pkgName)
+            if (viewContent instanceof ViewTerminal) {
+              return viewContent.viewPromise
+            }
+            return hoverText(pkgName)
           }
         }
       }
@@ -83,7 +91,8 @@ export async function createProvider() {
   })
 }
 
-function hoverText(pkgName: string) {
+function hoverText(pkgName: string): Hover {
+  const terminalRes = pkgInfoMap.get(pkgName)
   const args = encodeURIComponent(JSON.stringify([pkgName]))
   const markdownString = new MarkdownString()
   markdownString.isTrusted = true
@@ -91,7 +100,6 @@ function hoverText(pkgName: string) {
   markdownString.supportThemeIcons = true
   markdownString.appendMarkdown(`<span style="color:#9cdcfe;">${pkgName}</span>`)
 
-  const terminalRes = pkgInfoMap.get(pkgName)
   if (Array.isArray(terminalRes)) {
     for (const index in terminalRes) {
       markdownString.appendText('\n')
@@ -105,10 +113,9 @@ function hoverText(pkgName: string) {
     markdownString.appendMarkdown(`<span>${terminalRes}</span>`)
   }
   else {
-    markdownString.appendText('\n')
-    markdownString.appendMarkdown('<span>Please Waiting...</span>')
+    throw new TypeError('Not correct terminal result type')
   }
 
   markdownString.appendMarkdown(`<span style="color:#787878;">${'&nbsp;'.repeat(4)}click-install.</span>`)
-  return markdownString
+  return new Hover(markdownString)
 }

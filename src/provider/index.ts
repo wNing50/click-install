@@ -64,7 +64,7 @@ class ViewTerminal {
 }
 
 export function createProvider() {
-  languages.registerHoverProvider(['vue', 'typescript', 'javascript'], {
+  languages.registerHoverProvider(['vue', 'typescript', 'javascript', 'typescriptreact', 'javascriptreact'], {
     provideHover(document, position) {
       const lineText = document.lineAt(position.line).text
       const importRegex = /^\s*import[\s\S]+?from\s+['"]([\w\-/@]+)['"]\s*(?:;\s*)?$/

@@ -2,11 +2,12 @@ import type { Hover } from 'vscode'
 import { useControlledTerminal } from 'reactive-vscode'
 import { languages, window } from 'vscode'
 import { filterDeps, getPkgDeps } from '../deps'
+import { isPro } from '../utils/constant'
 import { hoverText } from './hoverText'
 
 const pkgInfoMap = new Map<string, string | string[] | ViewTerminal>()
 class ViewTerminal {
-  controlledTerminal: ReturnType<typeof useControlledTerminal> = useControlledTerminal({ hideFromUser: import.meta.env.NODE_ENV === 'pro' })
+  controlledTerminal: ReturnType<typeof useControlledTerminal> = useControlledTerminal({ hideFromUser: isPro })
   viewPkgName!: string
   viewPromise!: Promise<Hover>
   viewResolve!: (value: Hover) => void

@@ -1,6 +1,6 @@
 import { defineExtension } from 'reactive-vscode'
-import { createProvider } from './utils/provider'
-import { getPkgManager, registerCommand } from './utils/terminal'
+import { getPkgManager, registerCommand } from './install'
+import { createProvider } from './provider'
 
 export const { activate, deactivate } = defineExtension(async () => {
   await getPkgManager()

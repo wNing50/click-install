@@ -1,11 +1,12 @@
+import type { Hover } from 'vscode'
 import { useControlledTerminal } from 'reactive-vscode'
-import { Hover, languages, MarkdownString, window } from 'vscode'
-import { COMMAND } from './constant'
-import { filterDeps, getPkgDeps } from './modules'
+import { languages, window } from 'vscode'
+import { filterDeps, getPkgDeps } from '../deps'
+import { hoverText } from './hoverText'
 
 const pkgInfoMap = new Map<string, string | string[] | ViewTerminal>()
 class ViewTerminal {
-  controlledTerminal: ReturnType<typeof useControlledTerminal> = useControlledTerminal({ hideFromUser: true })
+  controlledTerminal: ReturnType<typeof useControlledTerminal> = useControlledTerminal({ hideFromUser: import.meta.env.NODE_ENV === 'pro' })
   viewPkgName!: string
   viewPromise!: Promise<Hover>
   viewResolve!: (value: Hover) => void
@@ -35,7 +36,6 @@ class ViewTerminal {
   constructor(pkgName: string) {
     this.viewPkgName = pkgName
     let stream: AsyncIterable<string>
-
     const startEvent = window.onDidStartTerminalShellExecution((onStartEvent) => {
       const { terminal: startTerminal } = onStartEvent
       if (startTerminal.processId === this.processId) {
@@ -54,7 +54,7 @@ class ViewTerminal {
           }
           pkgInfoMap.set(this.viewPkgName, 'Not found this package')
         }
-        this.viewResolve(hoverText(this.viewPkgName))
+        this.viewResolve(hoverText(this.viewPkgName, pkgInfoMap.get(this.viewPkgName) as string[]))
         startEvent.dispose()
         doneEvent.dispose()
         doneTerminal.dispose()
@@ -63,7 +63,7 @@ class ViewTerminal {
   }
 }
 
-export async function createProvider() {
+export function createProvider() {
   languages.registerHoverProvider(['vue', 'typescript', 'javascript'], {
     provideHover(document, position) {
       const lineText = document.lineAt(position.line).text
@@ -79,43 +79,14 @@ export async function createProvider() {
               pkgInfoMap.set(pkgName, viewTerminal)
               viewTerminal.view()
             }
-            const viewContent = pkgInfoMap.get(pkgName)
+            const viewContent = pkgInfoMap.get(pkgName)!
             if (viewContent instanceof ViewTerminal) {
               return viewContent.viewPromise
             }
-            return hoverText(pkgName)
+            return hoverText(pkgName, viewContent)
           }
         }
       }
     },
   })
-}
-
-function hoverText(pkgName: string): Hover {
-  const terminalRes = pkgInfoMap.get(pkgName)
-  const args = encodeURIComponent(JSON.stringify([pkgName]))
-  const markdownString = new MarkdownString()
-  markdownString.isTrusted = true
-  markdownString.supportHtml = true
-  markdownString.supportThemeIcons = true
-  markdownString.appendMarkdown(`<span style="color:#9cdcfe;">${pkgName}</span>`)
-
-  if (Array.isArray(terminalRes)) {
-    for (const index in terminalRes) {
-      markdownString.appendText('\n')
-      markdownString.appendMarkdown(`<span>${terminalRes[index]}</span>`)
-    }
-    markdownString.appendText('\n')
-    markdownString.appendMarkdown(`<span>[install](command:${COMMAND}?${args}) or [install -D](command:${COMMAND}.dev?${args}).</span>`)
-  }
-  else if (typeof terminalRes === 'string') {
-    markdownString.appendText('\n')
-    markdownString.appendMarkdown(`<span>${terminalRes}</span>`)
-  }
-  else {
-    throw new TypeError('Not correct terminal result type')
-  }
-
-  markdownString.appendMarkdown(`<span style="color:#787878;">${'&nbsp;'.repeat(4)}click-install.</span>`)
-  return new Hover(markdownString)
 }

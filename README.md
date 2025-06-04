@@ -1,5 +1,5 @@
 <p align='center'>
-    <img height="150" src="./assests/icon.png">
+    <img height="150" src="./assets/icon.png">
 </p>
 
 ## Description
@@ -10,7 +10,8 @@ No need to `pnpm/npm/yarn add xx` for each times.
 
 ## Config
 
-### pkgManager
+#### pkgManager
+If you don't set this config, found by this order automatically.
 ```json
 {
   "click-install.pkgManager": {
@@ -24,7 +25,6 @@ No need to `pnpm/npm/yarn add xx` for each times.
   }
 }
 ```
-If you don't set this config, found by this order automatically.
 
 ## License
 

@@ -19,10 +19,10 @@
     "Other"
   ],
   "main": "./dist/index.js",
-  "icon": "assests/icon.png",
+  "icon": "assets/icon.png",
   "files": [
     "LICENSE.md",
-    "assests/icon.png",
+    "assets/icon.png",
     "dist/*"
   ],
   "engines": {

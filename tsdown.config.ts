@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsdown'
+import { IS_PRO } from './src/utils/constant'
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -6,7 +7,6 @@ export default defineConfig({
   shims: false,
   dts: false,
   clean: true,
-  external: [
-    'vscode',
-  ],
+  external: ['vscode'],
+  minify: IS_PRO,
 })

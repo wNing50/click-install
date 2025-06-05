@@ -3,7 +3,6 @@
   "name": "click-install",
   "displayName": "click-install",
   "version": "0.1.3",
-  "private": true,
   "description": "A vscode extension that automatically import dependencies for your project.",
   "author": "Nick Wu",
   "license": "MIT",
@@ -48,12 +47,12 @@
     }
   },
   "scripts": {
-    "build": "tsdown src/index.ts --external vscode",
+    "build": "tsdown",
     "bumpp": "bumpp",
-    "dev": "pnpm build --watch --sourcemap --env.NODE_ENV=dev",
-    "pack": "vsce package --no-dependencies",
+    "dev": "tsdown --watch ./src --sourcemap --env.NODE_ENV=dev",
+    "pack": "pnpm build && vsce package --no-dependencies",
     "lint": "eslint . --fix",
-    "publish": "vsce publish --no-dependencies",
+    "publish": "pnpm build && vsce publish --no-dependencies",
     "typecheck": "tsc --noEmit",
     "release": "bumpp && pnpm publish",
     "prepare": "husky"

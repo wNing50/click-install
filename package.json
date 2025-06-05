@@ -47,24 +47,25 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
-    "bumpp": "bumpp",
-    "dev": "tsdown --watch ./src --sourcemap --env.NODE_ENV=dev",
-    "pack": "pnpm build && vsce package --no-dependencies",
+    "build": "tsdown --config ./tsdown.build.config.ts",
+    "dev": "tsdown",
+    "pack": "gulp --require node_modules/@esbuild-kit/cjs-loader -f ./gulp/pack.ts",
     "lint": "eslint . --fix",
-    "publish": "pnpm build && vsce publish --no-dependencies",
-    "typecheck": "tsc --noEmit",
+    "publish": "gulp --require node_modules/@esbuild-kit/cjs-loader -f ./gulp/publish.ts",
     "release": "bumpp && pnpm publish",
-    "prepare": "husky"
+    "husky": "husky"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.2.1",
+    "@esbuild-kit/cjs-loader": "^2.4.4",
+    "@types/gulp": "^4.0.17",
     "@types/node": "^22.13.4",
     "@types/vscode": "^1.97.0",
     "@vscode/vsce": "^3.2.2",
     "bumpp": "^10.0.3",
     "eslint": "^9.20.1",
     "find-up": "^7.0.0",
+    "gulp": "^5.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.0.0",
     "pnpm": "^10.10.0",

@@ -7,6 +7,7 @@ export default antfu(
       // eslint ignore globs here
       'node_modules',
       'dist',
+      'build',
     ],
   },
   {

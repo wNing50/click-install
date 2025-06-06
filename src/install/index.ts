@@ -1,7 +1,7 @@
 import type { TerminalShellExecutionEndEvent } from 'vscode'
 import type { PkgManagers } from '../pkgManager/constant'
 import { useCommand, useControlledTerminal } from 'reactive-vscode'
-import { window } from 'vscode'
+import { ProgressLocation, window } from 'vscode'
 import PKG from '../pkgManager'
 import { COMMAND, IS_PRO } from '../utils/constant'
 import { pkgCommands } from './constant'
@@ -46,9 +46,34 @@ export function registerCommand() {
       if (terminalMap.has(pkgName)) {
         return
       }
-      const { sendText, terminal } = useControlledTerminal({ hideFromUser: IS_PRO })
-      sendText(`${PKG.pkgManager} ${pkgCommands[PKG.pkgManager].install} ${pkgName} ${suffix}`)
-      terminalMap.set(pkgName, terminal)
+
+      window.withProgress({
+        location: ProgressLocation.Notification,
+        title: `installing ${pkgName} ...`,
+        cancellable: true,
+      }, (_, t) => {
+        t.onCancellationRequested(() => {
+          const terminal = terminalMap.get(pkgName)
+          terminal.value?.dispose()
+          terminalMap.delete(pkgName)
+          window.showWarningMessage(`Installation of ${pkgName} cancelled`)
+        })
+
+        return new Promise<void>((resolve) => {
+          const { sendText, terminal } = useControlledTerminal({ hideFromUser: IS_PRO })
+          sendText(`${PKG.pkgManager} ${pkgCommands[PKG.pkgManager].install} ${pkgName} ${suffix}`)
+          terminalMap.set(pkgName, terminal)
+          const d = window.onDidEndTerminalShellExecution((onDidEvent) => {
+            if (onDidEvent.terminal.processId === terminal.value?.processId && onDidEvent.exitCode === 0) {
+              terminal.value.dispose()
+              terminalMap.delete(pkgName)
+              d.dispose()
+              window.showInformationMessage(`${pkgName} installed`)
+              resolve()
+            }
+          })
+        })
+      })
     })
   }
 
@@ -56,14 +81,4 @@ export function registerCommand() {
   // todo: with @types
   installCommand(COMMAND)
   installCommand(`${COMMAND}.dev`, '-D')
-
-  const d = window.onDidEndTerminalShellExecution((t) => {
-    const { terminal } = t
-    const { name: pkgName } = terminal
-    if (terminalMap.has(pkgName)) {
-      terminal.dispose()
-      terminalMap.delete(pkgName)
-      d.dispose()
-    }
-  })
 }

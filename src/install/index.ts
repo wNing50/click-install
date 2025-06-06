@@ -3,7 +3,7 @@ import type { PkgManagers } from '../pkgManager/constant'
 import { useCommand, useControlledTerminal } from 'reactive-vscode'
 import { ProgressLocation, window } from 'vscode'
 import PKG from '../pkgManager'
-import { COMMAND, IS_PRO } from '../utils/constant'
+import { COMMAND_INSTALL, IS_PRO } from '../utils/constant'
 import { pkgCommands } from './constant'
 
 interface DisposablesTerminalOptions {
@@ -79,6 +79,6 @@ export function registerCommand() {
 
   // todo: suit monorepo
   // todo: with @types
-  installCommand(COMMAND)
-  installCommand(`${COMMAND}.dev`, '-D')
+  installCommand(COMMAND_INSTALL)
+  installCommand(`${COMMAND_INSTALL}.dev`, '-D')
 }

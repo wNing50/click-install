@@ -1,8 +1,8 @@
 import type { Hover } from 'vscode'
-import { useControlledTerminal } from 'reactive-vscode'
+import { useCommand, useControlledTerminal } from 'reactive-vscode'
 import { languages, window } from 'vscode'
 import { filterDeps, getPkgDeps } from '../deps'
-import { IS_PRO } from '../utils/constant'
+import { COMMAND_REFIND, IS_PRO } from '../utils/constant'
 import { hoverText } from './hoverText'
 
 const pkgInfoMap = new Map<string, string | string[] | ViewTerminal>()
@@ -89,5 +89,12 @@ export function createProvider() {
         }
       }
     },
+  })
+  registerReview()
+}
+
+function registerReview() {
+  useCommand(COMMAND_REFIND, (pkgName) => {
+    pkgInfoMap.delete(pkgName)
   })
 }

@@ -1,5 +1,5 @@
 import { Hover, MarkdownString } from 'vscode'
-import { COMMAND } from '../utils/constant'
+import { COMMAND_INSTALL, COMMAND_REFIND } from '../utils/constant'
 
 export function hoverText(pkgName: string, terminalRes: string | string[]): Hover {
   const args = encodeURIComponent(JSON.stringify([pkgName]))
@@ -15,11 +15,14 @@ export function hoverText(pkgName: string, terminalRes: string | string[]): Hove
       markdownString.appendMarkdown(`<span>${terminalRes[index]}</span>`)
     }
     markdownString.appendText('\n')
-    markdownString.appendMarkdown(`<span>[install](command:${COMMAND}?${args}) or [install -D](command:${COMMAND}.dev?${args}).</span>`)
+    markdownString.appendMarkdown(`<span>[install](command:${COMMAND_INSTALL}?${args}) or [install -D](command:${COMMAND_INSTALL}.dev?${args}).</span>`)
   }
   else if (typeof terminalRes === 'string') {
+    // means not found
     markdownString.appendText('\n')
     markdownString.appendMarkdown(`<span>${terminalRes}</span>`)
+    markdownString.appendText('\n')
+    markdownString.appendMarkdown(`<span>[re-find](command:${COMMAND_REFIND}?${args}).</span>`)
   }
   else {
     throw new TypeError('Not correct terminal result type')

@@ -1,42 +1,58 @@
 import type { PkgManagers } from './constant'
-import { workspace } from 'vscode'
+import { findUpSync } from 'find-up'
+import { window, workspace } from 'vscode'
 import { disposablesTerminal } from '../install'
 import { pkgManagers } from './constant'
 
-const PKG: { pkgManager: PkgManagers } = {
-  pkgManager: 'npm',
+const PKG: { usePkgManager: PkgManagers, useMonorepo: boolean } = {
+  usePkgManager: 'npm',
+  useMonorepo: false,
 }
 
 function* pkgManagersGenerator() {
   yield* pkgManagers
 }
 
-export function getPkgManager() {
+function getPkgManager() {
   const config = workspace.getConfiguration('click-install')
-  const userPkgManager = config.get<string>('pkgManager') as PkgManagers
-  if (userPkgManager) {
-    PKG.pkgManager = userPkgManager
+  const customPkgManager = config.get<string>('pkgManager') as PkgManagers
+  if (customPkgManager) {
+    PKG.usePkgManager = customPkgManager
     return
   }
-  const pkgManagers = pkgManagersGenerator()
-  let pkg = pkgManagers.next()
+  const pkgGen = pkgManagersGenerator()
+  let genNext = pkgGen.next()
   return disposablesTerminal({
-    command: () => `${pkg.value} -v`,
+    command: () => `${genNext.value} -v`,
     afterExecuted(controlledTerminal, onDidEvent) {
       const { sendText } = controlledTerminal
       const { exitCode } = onDidEvent
-      if (pkg.done) {
+      if (genNext.done) {
         return
       }
       if (exitCode === 0) {
-        PKG.pkgManager = pkg.value
+        PKG.usePkgManager = genNext.value
         return
       }
-      pkg = pkgManagers.next()
-      sendText(`${pkg.value} -v`)
+      genNext = pkgGen.next()
+      sendText(`${genNext.value} -v`)
     },
     dispose: true,
   })
+}
+
+function findMonorepo() {
+  const yaml = findUpSync('pnpm-workspace.yaml', {
+    cwd: window.activeTextEditor?.document.fileName,
+  })
+  if (yaml) {
+    PKG.useMonorepo = true
+  }
+}
+
+export async function init() {
+  await getPkgManager()
+  findMonorepo()
 }
 
 export default PKG

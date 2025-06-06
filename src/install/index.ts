@@ -20,7 +20,7 @@ export function disposablesTerminal({ command, afterExecuted, dispose = false }:
     const controlledTerminal = useControlledTerminal({ hideFromUser: IS_PRO })
     const { terminal, sendText } = controlledTerminal
     if (typeof command === 'function') {
-      sendText(command(PKG.pkgManager))
+      sendText(command(PKG.usePkgManager))
     }
     else {
       sendText(command)
@@ -61,7 +61,7 @@ export function registerCommand() {
 
         return new Promise<void>((resolve) => {
           const { sendText, terminal } = useControlledTerminal({ hideFromUser: IS_PRO })
-          sendText(`${PKG.pkgManager} ${pkgCommands[PKG.pkgManager].install} ${pkgName} ${suffix}`)
+          sendText(`${PKG.usePkgManager} ${pkgCommands[PKG.usePkgManager].install} ${pkgName} ${suffix}`)
           terminalMap.set(pkgName, terminal)
           const d = window.onDidEndTerminalShellExecution((onDidEvent) => {
             if (onDidEvent.terminal.processId === terminal.value?.processId && onDidEvent.exitCode === 0) {
@@ -77,8 +77,11 @@ export function registerCommand() {
     })
   }
 
-  // todo: suit monorepo
   // todo: with @types
   installCommand(COMMAND_INSTALL)
   installCommand(`${COMMAND_INSTALL}.dev`, '-D')
+  if (PKG.usePkgManager === 'pnpm' && PKG.useMonorepo) {
+    installCommand(`${COMMAND_INSTALL}.workspace`, '-w')
+    installCommand(`${COMMAND_INSTALL}.workspace.dev`, '-w -D')
+  }
 }
